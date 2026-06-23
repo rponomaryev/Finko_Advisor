@@ -143,11 +143,18 @@ export function NewProjectForm() {
     if (!response.ok) {
       setSubmitting(false);
       const payload = await response.json().catch(() => null) as { error?: string } | null;
-      if (response.status === 401) {
-        setError(locale === "ru" ? "Сессия истекла. Войдите заново через demo-login." : locale === "uz" ? "Sessiya muddati tugadi. demo-login orqali qayta kiring." : "Session expired. Please sign in again via demo-login.");
-        router.push("/demo-login?next=/advisor/new");
-        return;
-      }
+      if (response.status === 401 || response.status === 403) {
+       setError(
+        locale === "ru"
+          ? "Нужна пользовательская demo-сессия. Выполняется повторный вход."
+          : locale === "uz"
+            ? "Foydalanuvchi demo-sessiyasi kerak. Qayta kirilmoqda."
+            : "A user demo session is required. Signing in again."
+       );
+        
+       window.location.assign(`/api/auth/demo-login?next=${encodeURIComponent("/advisor/new")}`);
+       return;
+     }
       setError(payload?.error ? `${messages.newProject.error}: ${payload.error}` : messages.newProject.error);
       return;
     }
