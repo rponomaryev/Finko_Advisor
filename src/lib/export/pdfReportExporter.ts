@@ -67,9 +67,10 @@ async function embedLogoImage(doc: PDFDocument) {
 
 async function embedUnicodeFonts(doc: PDFDocument) {
   const projectFontDir = path.join(process.cwd(), "public", "fonts");
-  const fontSourceDir = path.join(process.cwd(), "node_modules", "@fontsource", "noto-sans", "files");
-  // Prefer full Unicode fonts first. The @fontsource cyrillic WOFF files are unicode-range subsets;
-  // they can render Latin digits/punctuation as boxes when embedded as the only font in pdf-lib.
+
+  // Use only full Unicode TTF/OTF fonts. Do not use @fontsource WOFF unicode-range subsets here:
+  // pdf-lib embeds a single font, so subset WOFF files can render digits, punctuation, spaces,
+  // bullets or some Cyrillic glyphs as boxes in the exported PDF.
   const fontPairs = [
     {
       regular: path.join(projectFontDir, "NotoSans-Regular.ttf"),
@@ -102,10 +103,6 @@ async function embedUnicodeFonts(doc: PDFDocument) {
     {
       regular: "/Library/Fonts/Arial Unicode.ttf",
       bold: "/Library/Fonts/Arial Unicode.ttf"
-    },
-    {
-      regular: path.join(fontSourceDir, "noto-sans-cyrillic-400-normal.woff"),
-      bold: path.join(fontSourceDir, "noto-sans-cyrillic-700-normal.woff")
     }
   ];
 
@@ -114,8 +111,8 @@ async function embedUnicodeFonts(doc: PDFDocument) {
     const boldPath = await firstReadablePath([pair.bold]);
     if (!regularPath || !boldPath) continue;
     try {
-      const font = await doc.embedFont(await readFile(regularPath), { subset: true });
-      const boldFont = await doc.embedFont(await readFile(boldPath), { subset: true });
+      const font = await doc.embedFont(await readFile(regularPath), { subset: false });
+      const boldFont = await doc.embedFont(await readFile(boldPath), { subset: false });
       return { font, boldFont, textMode: "unicode" as const };
     } catch {
       // Try the next candidate pair; some platforms expose fonts in formats fontkit cannot embed.
@@ -148,8 +145,8 @@ async function embedUnicodeFonts(doc: PDFDocument) {
         "https://github.com/notofonts/noto-fonts/raw/main/hinted/ttf/NotoSans/NotoSans-Bold.ttf"
       ])
     ]);
-    const font = await doc.embedFont(regularBuffer, { subset: true });
-    const boldFont = await doc.embedFont(boldBuffer, { subset: true });
+    const font = await doc.embedFont(regularBuffer, { subset: false });
+    const boldFont = await doc.embedFont(boldBuffer, { subset: false });
     return { font, boldFont, textMode: "unicode" as const };
   } catch {
     // Network font loading failed; do not create a PDF with transliterated Cyrillic.
@@ -186,8 +183,15 @@ function toWinAnsiText(value: string) {
 
 function cleanPdfText(value: string) {
   return String(value ?? "")
+    .replace(/\u00A0/g, " ")
+    .replace(/\u202F/g, " ")
+    .replace(/[•·]/g, "-")
+    .replace(/[–—]/g, "-")
+    .replace(/[“”«»]/g, '"')
+    .replace(/[‘’]/g, "'")
     .replace(/"?(value|sourceUrl|year|citation|unit|sourceId|matchQuality)"?\s*[—:-][^\n]*/gi, "")
     .replace(/\{[\s\S]{0,600}?\}/g, "")
+    .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
