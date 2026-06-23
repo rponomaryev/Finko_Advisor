@@ -1,0 +1,9 @@
+<svg width="132" height="40" viewBox="0 0 132 40" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FINKO">
+  <g fill="#E8001C">
+    <path d="M8 9h34l-7.5 7.5H8V9Z"/>
+    <path d="M8 17.25h26.2l-7.5 7.5H8v-7.5Z"/>
+    <path d="M8 25.5h18l-7.5 7.5H8v-7.5Z"/>
+    <path d="M31.5 9H50L25.5 33H7l24.5-24Z"/>
+  </g>
+  <text x="58" y="27" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="800" letter-spacing="1.2">FINKO</text>
+</svg>

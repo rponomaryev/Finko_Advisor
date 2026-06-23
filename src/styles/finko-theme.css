@@ -1,0 +1,26 @@
+:root {
+  --finko-primary: #E11446;
+  --finko-primary-dark: #B80F36;
+  --finko-primary-light: #FDE7EE;
+
+  --finko-black: #000000;
+  --finko-white: #FFFFFF;
+
+  --finko-bg: #FAFAFA;
+  --finko-surface: #FFFFFF;
+  --finko-border: #E5E7EB;
+
+  --finko-text: #111827;
+  --finko-muted: #6B7280;
+
+  --finko-warning: #F59E0B;
+  --finko-danger: #DC2626;
+  --finko-success: #16A34A;
+  --finko-info: #2563EB;
+
+  --finko-radius-card: 20px;
+  --finko-radius-button: 14px;
+  --finko-radius: 20px;
+
+  --finko-font: "Roboto", Arial, sans-serif;
+}

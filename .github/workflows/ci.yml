@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: advisor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d advisor_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/advisor_test
+      NODE_ENV: test
+      DEMO_USER_TOKEN: test-user-token
+      DEMO_ADMIN_TOKEN: test-admin-token
+      DEMO_SESSION_SECRET: test-session-secret-minimum-32-characters
+      AUTH_SECRET: test-auth-secret-minimum-32-characters
+      NEXTAUTH_SECRET: test-nextauth-secret-minimum-32-characters
+      NEXTAUTH_URL: http://localhost:3000
+      OPENAI_API_KEY: test-openai-key
+      OPENAI_MODEL: gpt-4.1-mini
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      STRICT_REPORT_LOCALE_CHECK: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run typecheck
+      - run: npm run test:samples
+      - run: npm run test:locale
+      - run: npm run test:exports
+      - run: npm run test:financial-consistency
+      - run: npm test
+      - run: npm run build
+      - run: npm audit --omit=dev --audit-level=high

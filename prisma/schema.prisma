@@ -1,0 +1,235 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  name      String?
+  phone     String?
+  email     String?
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Project {
+  id                      String          @id @default(cuid())
+  userId                  String?
+  title                   String
+  sectorCode              String
+  status                  String          @default("draft")
+  businessType            String?
+  region                  String?
+  district                String?
+  plannedStartPeriod      String?
+  userLanguage            String?         @default("ru")
+  businessIdea            String?
+  productionType          String?
+  toyType                 String?
+  premisesStatus          String?
+  equipmentCondition      String?
+  monthlyCapacity         Int?
+  averagePrice            Decimal?        @db.Decimal(18, 2)
+  targetCustomers         String?
+  rawMaterialSource       String?
+  certificationAwareness  String?
+  supplierSelected        Boolean?
+  ownContribution         Decimal?        @db.Decimal(18, 2)
+  sectionNotes            Json?
+  ownContributionAmount   Decimal?        @db.Decimal(18, 2)
+  ownContributionCurrency String?
+  ownContributionUZS      Decimal?        @db.Decimal(18, 2)
+  exchangeRateUZSPerUSD   Decimal?        @db.Decimal(18, 6)
+  creditNeeded            String?
+  requestedLoanAmount     Decimal?        @db.Decimal(18, 2)
+  requestedLoanCurrency   String?
+  requestedLoanUZS        Decimal?        @db.Decimal(18, 2)
+  loanPurpose             String?
+  loanTermMonths          Int?
+  requestedLeasingAmount  Decimal?        @db.Decimal(18, 2)
+  collateralAvailable     Boolean?
+  collateralType          String?
+  collateralEstimatedValue Decimal?        @db.Decimal(18, 2)
+  experienceLevel         String?
+  aiMode                  String?
+  aiExtraction            Json?
+  templateData            Json?
+  structuredData          Json?
+  financialResult         Json?
+  riskResult              Json?
+  feasibilityScore        Float?
+  bankReadinessScore      Float?
+  reportData              Json?
+  aiReportData            Json?
+  webResearchData         Json?
+  consentGiven            Boolean         @default(false)
+  consentTimestamp        DateTime?
+  consentVersion          String?         @default("1.0")
+  consentLocale           String?
+  staffPlan               Json?
+  businessProfile         Json?
+  exchangeRateSnapshot    Json?
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+  user                    User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  answers                 ProjectAnswer[]
+  report                  Report?
+  staffRoles              ProjectStaffRole[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@index([userId])
+}
+
+model ProjectAnswer {
+  id          String   @id @default(cuid())
+  projectId   String
+  questionKey String
+  question    String
+  answer      String
+  answerType  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, questionKey])
+}
+
+model SectorTemplate {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  description  String?
+  businessType String?
+  requiredInputs Json?
+  assumptions  Json
+  questions    Json
+  riskRules    Json
+  scoringRules Json
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  title     String
+  content   Json
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ProjectStaffRole {
+  id                    String   @id @default(cuid())
+  projectId             String
+  role                  String
+  count                 Int      @default(1)
+  monthlySalaryAmount   Decimal  @db.Decimal(18, 2)
+  monthlySalaryCurrency String   @default("UZS")
+  monthlySalaryUZS      Decimal? @db.Decimal(18, 2)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  project               Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model ExchangeRate {
+  id             String   @id @default(cuid())
+  currency       String   @default("USD")
+  base           String   @default("UZS")
+  sourceCurrency String   @default("USD")
+  targetCurrency String   @default("UZS")
+  rate           Decimal  @db.Decimal(18, 6)
+  requestedDate  String
+  rateDate       String
+  source         String   @default("CBU")
+  sourceUrl      String
+  fetchedAt      DateTime @default(now())
+
+  @@unique([currency, base, requestedDate])
+  @@index([currency, base])
+  @@index([fetchedAt])
+}
+
+model MarketDataPoint {
+  id              String   @id @default(cuid())
+  sector          String
+  businessType    String?
+  indicator       String
+  year            Int
+  region          String?
+  value           Float?
+  unit            String?
+  currency        String?
+  hsCode          String?
+  activityCode    String?
+  tradeType       String?
+  country         String?
+  productCategory String?
+  valueUsd        Float?
+  volume          Float?
+  sourceName      String
+  sourceUrl       String?
+  sourceType      String
+  lastUpdated     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([sector])
+  @@index([businessType])
+  @@index([indicator])
+  @@index([year])
+  @@index([region])
+  @@index([hsCode])
+  @@index([tradeType])
+  @@index([country])
+}
+
+model SectorMapping {
+  id                   String   @id @default(cuid())
+  businessType         String
+  normalizedSector     String
+  possibleHsCodesJson  String?
+  possibleActivityJson String?
+  keywordsJson         String?
+  confidence           String
+  mappingSource        String
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([businessType])
+  @@index([normalizedSector])
+}
+
+model AIUsageLog {
+  id             String   @id @default(cuid())
+  projectId      String?
+  userId         String?
+  operation      String
+  provider       String
+  model          String
+  responseId     String?
+  inputTokens    Int?
+  outputTokens   Int?
+  totalTokens    Int?
+  webSearchUsed  Boolean  @default(false)
+  webSearchCalls Int?
+  status         String
+  errorMessage   String?
+  fallbackUsed   Boolean  @default(false)
+  durationMs     Int?
+  createdAt      DateTime @default(now())
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([operation])
+  @@index([createdAt])
+}
